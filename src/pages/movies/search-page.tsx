@@ -1,11 +1,12 @@
 import MoviePoster from "../../components/movies/movie-poster";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { searchMovies } from "../../api/movies";
+import { useQuery } from "@tanstack/react-query";
 import BookmarkButton from "../../components/movies/bookmark-button";
 import Pagination from "../../components/movies/pagination";
-import { useMovieRequest } from "../../hooks/use-movie-request";
-import { RequestState } from "./request-state";
+import { getMovieErrorMessage } from "../../lib/movie-error";
+import { movieQueries } from "../../queries/movies";
+import { QueryActivity, RequestState } from "./request-state";
 
 export function SearchPage() {
   const { query, page: requestedPage } = useSearch({ from: "/search" });
@@ -13,7 +14,7 @@ export function SearchPage() {
   const navigate = useNavigate({ from: "/search" });
   const [searchText, setSearchText] = useState(query ?? "");
   const normalizedQuery = query?.trim() ?? "";
-  const request = useMovieRequest(normalizedQuery ? "search:" + normalizedQuery + ":" + page : null, (signal) => searchMovies(normalizedQuery, page, signal));
+  const request = useQuery(movieQueries.search(normalizedQuery, page));
 
   useEffect(() => setSearchText(query ?? ""), [query]);
 
@@ -48,9 +49,10 @@ export function SearchPage() {
       ) : (
         <section aria-label="영화 검색 결과">
           <h2 className="mb-6 text-[22px] font-bold">“{normalizedQuery}” 검색 결과</h2>
-          {(request.status === "loading" || request.status === "idle") && <RequestState title="검색 결과를 불러오고 있어요." loading />}
-          {request.status === "error" && <RequestState title="검색 결과를 불러오지 못했어요." description={request.error} onRetry={request.retry} />}
-          {request.status === "success" && (
+          <QueryActivity query={request} />
+          {request.isPending && <RequestState title="검색 결과를 불러오고 있어요." loading />}
+          {request.isError && request.data === undefined && <RequestState title="검색 결과를 불러오지 못했어요." description={getMovieErrorMessage(request.error)} onRetry={() => void request.refetch()} />}
+          {request.data !== undefined && (
             <>
               <p className="mb-6 text-[#777]" role="status">영화 {request.data.totalResults.toLocaleString("ko-KR")}편</p>
               {request.data.movies.length === 0 ? (

@@ -1,20 +1,22 @@
 import MoviePoster from "../../components/movies/movie-poster";
 import { Link, useParams } from "@tanstack/react-router";
-import { getMovieDetails } from "../../api/movies";
+import { useQuery } from "@tanstack/react-query";
 import BookmarkButton from "../../components/movies/bookmark-button";
-import { useMovieRequest } from "../../hooks/use-movie-request";
-import { RequestState } from "./request-state";
+import { getMovieErrorMessage } from "../../lib/movie-error";
+import { movieQueries } from "../../queries/movies";
+import { QueryActivity, RequestState } from "./request-state";
 
 export function MovieDetailPage() {
   const { movieId } = useParams({ from: "/movies/$movieId" });
-  const request = useMovieRequest("movie:" + movieId, (signal) => getMovieDetails(movieId, signal));
+  const request = useQuery(movieQueries.detail(movieId));
 
-  if (request.status !== "success") {
+  if (request.data === undefined) {
     return (
       <main className="mx-auto w-[1200px] max-w-[calc(100%-48px)] pt-12 pb-20">
         <Link className="mb-8 inline-block text-[#555]" to="/">← 영화 목록</Link>
-        {request.status === "error" ? (
-          <RequestState title="영화 정보를 불러오지 못했어요." description={request.error} onRetry={request.retry} />
+        <QueryActivity query={request} />
+        {request.isError ? (
+          <RequestState title="영화 정보를 불러오지 못했어요." description={getMovieErrorMessage(request.error)} onRetry={() => void request.refetch()} />
         ) : (
           <RequestState title="영화 정보를 불러오고 있어요." loading />
         )}
@@ -26,6 +28,7 @@ export function MovieDetailPage() {
   if (!movie) {
     return (
       <main className="mx-auto w-[1200px] max-w-[calc(100%-48px)] pt-12 pb-20 text-center">
+        <QueryActivity query={request} />
         <RequestState title="영화를 찾을 수 없어요." description="영화 주소를 확인하거나 목록에서 다른 영화를 선택해 주세요." />
         <Link className="mt-6 inline-block text-[#555] underline" to="/">영화 목록으로 돌아가기</Link>
       </main>
@@ -40,7 +43,10 @@ export function MovieDetailPage() {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-neutral-950/95 via-neutral-950/80 to-neutral-950/35" />
         <div className="relative mx-auto grid w-[1200px] max-w-[calc(100%-48px)] grid-cols-[280px_1fr] gap-12 pt-12 pb-20 text-white">
-          <Link className="col-span-full w-fit text-[#ddd]" to="/">← 영화 목록</Link>
+          <div className="col-span-full">
+            <Link className="mb-2 inline-block w-fit text-[#ddd]" to="/">← 영화 목록</Link>
+            <QueryActivity query={request} />
+          </div>
           <div className="relative self-start">
             <MoviePoster className="w-[280px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.45)]" src={movie.posterPath} alt={`${movie.title} 포스터`} />
             <BookmarkButton movieId={movie.id} movieTitle={movie.title} />

@@ -1,0 +1,198 @@
+{
+  "checks": [
+    "real TMDB list success",
+    "real TMDB detail success",
+    "real list/detail revisit adds zero API requests",
+    "real blank search sends zero API requests",
+    "real TMDB search success",
+    "real search revisit adds zero API requests",
+    "real search empty result",
+    "blocked API shows search error and retry",
+    "real API retry recovers",
+    "real Query Devtools displays movie query keys",
+    "invalid detail ID shows not-found without API request",
+    "no uncaught browser exceptions"
+  ],
+  "cacheRevisits": [
+    {
+      "scenario": "list -> detail -> list -> same detail",
+      "before": 2,
+      "after": 2
+    },
+    {
+      "scenario": "search -> list -> back to same search",
+      "before": 3,
+      "after": 3
+    }
+  ],
+  "network": [
+    {
+      "event": "request",
+      "id": "8448.53",
+      "method": "GET",
+      "path": "/3/movie/popular",
+      "search": "page=1&language=ko-KR"
+    },
+    {
+      "event": "request",
+      "id": "F4DA5C2A2D17184C55A5E82E154A4834",
+      "method": "OPTIONS",
+      "path": "/3/movie/popular",
+      "search": "page=1&language=ko-KR"
+    },
+    {
+      "event": "response",
+      "id": "F4DA5C2A2D17184C55A5E82E154A4834",
+      "path": "/3/movie/popular",
+      "status": 200
+    },
+    {
+      "event": "response",
+      "id": "8448.53",
+      "path": "/3/movie/popular",
+      "status": 200
+    },
+    {
+      "event": "request",
+      "id": "8448.96",
+      "method": "GET",
+      "path": "/3/movie/155",
+      "search": "language=ko-KR"
+    },
+    {
+      "event": "request",
+      "id": "9926A832D017AB34FC43B6AB9D90B312",
+      "method": "OPTIONS",
+      "path": "/3/movie/155",
+      "search": "language=ko-KR"
+    },
+    {
+      "event": "response",
+      "id": "9926A832D017AB34FC43B6AB9D90B312",
+      "path": "/3/movie/155",
+      "status": 200
+    },
+    {
+      "event": "response",
+      "id": "8448.96",
+      "path": "/3/movie/155",
+      "status": 200
+    },
+    {
+      "event": "request",
+      "id": "8448.188",
+      "method": "GET",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EA%B8%B0%EC%83%9D%EC%B6%A9&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "request",
+      "id": "3F70D64C70D279463A8F6FB3AB1EFC01",
+      "method": "OPTIONS",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EA%B8%B0%EC%83%9D%EC%B6%A9&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "response",
+      "id": "3F70D64C70D279463A8F6FB3AB1EFC01",
+      "path": "/3/search/movie",
+      "status": 200
+    },
+    {
+      "event": "response",
+      "id": "8448.188",
+      "path": "/3/search/movie",
+      "status": 200
+    },
+    {
+      "event": "request",
+      "id": "8448.297",
+      "method": "GET",
+      "path": "/3/search/movie",
+      "search": "page=1&query=umcinezzzznomatch20261103&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "request",
+      "id": "FDC7F9B537B163C8885C8D5FA0516323",
+      "method": "OPTIONS",
+      "path": "/3/search/movie",
+      "search": "page=1&query=umcinezzzznomatch20261103&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "response",
+      "id": "FDC7F9B537B163C8885C8D5FA0516323",
+      "path": "/3/search/movie",
+      "status": 200
+    },
+    {
+      "event": "response",
+      "id": "8448.297",
+      "path": "/3/search/movie",
+      "status": 200
+    },
+    {
+      "event": "request",
+      "id": "8448.298",
+      "method": "GET",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EC%9D%B8%ED%84%B0%EC%8A%A4%ED%85%94%EB%9D%BC&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "failed",
+      "id": "8448.298",
+      "error": ""
+    },
+    {
+      "event": "request",
+      "id": "8448.299",
+      "method": "GET",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EC%9D%B8%ED%84%B0%EC%8A%A4%ED%85%94%EB%9D%BC&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "failed",
+      "id": "8448.299",
+      "error": ""
+    },
+    {
+      "event": "request",
+      "id": "8448.300",
+      "method": "GET",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EC%9D%B8%ED%84%B0%EC%8A%A4%ED%85%94%EB%9D%BC&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "request",
+      "id": "A7D03F60EBAC9638177C0D3F352E9685",
+      "method": "OPTIONS",
+      "path": "/3/search/movie",
+      "search": "page=1&query=%EC%9D%B8%ED%84%B0%EC%8A%A4%ED%85%94%EB%9D%BC&language=ko-KR&include_adult=false"
+    },
+    {
+      "event": "response",
+      "id": "A7D03F60EBAC9638177C0D3F352E9685",
+      "path": "/3/search/movie",
+      "status": 200
+    },
+    {
+      "event": "response",
+      "id": "8448.300",
+      "path": "/3/search/movie",
+      "status": 200
+    }
+  ],
+  "consoleErrors": [],
+  "note": "Real TMDB API responses. Actual Chrome Query Devtools and Network panel verified. Detailed Network events captured via CDP. Authentication headers and API keys excluded.",
+  "queryDevtoolsScreenshot": "query-devtools.png",
+  "networkPanelScreenshot": "network-panel.png",
+  "networkPanel": {
+    "httpCacheDisabled": true,
+    "fetchXhrRows": 3,
+    "httpStatuses": [
+      200,
+      200,
+      200
+    ],
+    "initiator": "movies.ts"
+  }
+}
