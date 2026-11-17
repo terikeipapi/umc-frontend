@@ -12,12 +12,20 @@ import {
   RouterProvider,
 } from "@tanstack/react-router";
 import { createServer } from "vite";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 let server;
 let form;
 let profileModule;
 let pages;
+let auth;
+let authRoute;
+let memberQueries;
+let queryClient;
+let generatedTree;
+const token = (sub = "17", exp = Math.floor(Date.now() / 1000) + 3600) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub, exp })).toString("base64url")}.signature`;
+const member = { email: "movie@example.com", nickname: "영화산책", createdAt: "2026-11-17T00:00:00.000Z" };
 
 before(async () => {
   server = await createServer({
@@ -31,7 +39,11 @@ before(async () => {
     logLevel: "error",
   });
   form = await server.ssrLoadModule("/src/lib/member-form.ts");
-  profileModule = await server.ssrLoadModule("/src/store/profile-preview-store.ts");
+  profileModule = await server.ssrLoadModule("/src/store/auth-store.ts");
+  auth = await server.ssrLoadModule("/src/lib/auth.ts");
+  authRoute = await server.ssrLoadModule("/src/routes/(authenticated)/_auth.tsx");
+  ({ memberQueries } = await server.ssrLoadModule("/src/queries/member.ts"));
+  ({ routeTree: generatedTree } = await server.ssrLoadModule("/src/routeTree.gen.ts"));
   const [login, profile, edit] = await Promise.all([
     server.ssrLoadModule("/src/pages/auth/login-page.tsx"),
     server.ssrLoadModule("/src/pages/member/profile-page.tsx"),
@@ -47,11 +59,8 @@ before(async () => {
 after(async () => server?.close());
 
 beforeEach(() => {
-  if (profileModule) {
-    profileModule.useProfilePreviewStore.setState({
-      profile: { ...profileModule.DEFAULT_PREVIEW_PROFILE },
-    });
-  }
+  profileModule.useAuthStore.getState().clearSession();
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
 });
 
 async function renderPath(pathname) {
@@ -68,7 +77,7 @@ async function renderPath(pathname) {
   await router.load();
   assert.equal(router.state.location.pathname, pathname);
   assert.equal(router.state.matches.at(-1)?.status, "success");
-  return renderToStaticMarkup(createElement(RouterProvider, { router }));
+  return renderToStaticMarkup(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })));
 }
 
 function labeledInput(html, label, name) {
@@ -121,26 +130,54 @@ test("login accepts an existing nonempty password without imposing the signup po
   assert.equal(form.canPreviewLogin("invalid", "old"), false);
 });
 
-test("saving a preview nickname trims it and preserves the existing email", () => {
-  const { useProfilePreviewStore: store } = profileModule;
-  const original = store.getState().profile;
-  assert.equal(store.getState().updateNickname("  영화친구  "), true);
-  assert.deepEqual(store.getState().profile, {
-    email: original.email,
-    nickname: "영화친구",
-  });
-  assert.deepEqual(original, profileModule.DEFAULT_PREVIEW_PROFILE);
-  assert.deepEqual(Object.keys(store.getState().profile).sort(), ["email", "nickname"]);
+test("session derives memberId from JWT and rejects malformed or expired tokens", () => {
+  const store = profileModule.useAuthStore;
+  store.getState().setSession(token());
+  assert.equal(store.getState().memberId, 17);
+  assert.equal(profileModule.getSession().memberId, 17);
+  for (const invalid of ["bad-token", token("0"), token("-1"), token("1e3"), token("9007199254740992"), token("17", 1)]) {
+    assert.throws(() => store.getState().setSession(invalid), /다시 로그인/);
+  }
+  store.setState({ accessToken: token("17", 1), memberId: 17 });
+  assert.equal(profileModule.getSession(), null);
+  assert.equal(store.getState().memberId, null);
 });
 
-test("invalid preview edits leave the current profile unchanged", () => {
-  const { useProfilePreviewStore: store } = profileModule;
-  store.getState().updateNickname("저장된이름");
-  const saved = store.getState().profile;
-  for (const value of ["", " ", "가", "가".repeat(13)]) {
-    assert.equal(store.getState().updateNickname(value), false, value);
-    assert.equal(store.getState().profile, saved);
+test("login return URLs reject external destinations and login loops", () => {
+  for (const invalid of ["https://evil.example", "//evil.example", "/\\evil.example", "/login", "/signup", "/\nevil.example"]) {
+    assert.equal(auth.getSafeRedirect(invalid), "/mypage");
   }
+  assert.equal(auth.getSafeRedirect("/movies/550?tab=rating#mine"), "/movies/550?tab=rating#mine");
+});
+
+test("the shared layout guard redirects both protected page destinations before loading", () => {
+  for (const path of ["/mypage", "/mypage/edit"]) {
+    assert.throws(() => authRoute.Route.options.beforeLoad({ location: { href: path } }), (error) => {
+      assert.equal(error.options.to, "/login");
+      assert.equal(error.options.search.redirect, path);
+      return true;
+    });
+  }
+});
+
+test("the generated tree places both member URLs under the shared pathless authenticated layout", () => {
+  const router = createRouter({ routeTree: generatedTree, history: createMemoryHistory({ initialEntries: ["/"] }) });
+  for (const path of ["/mypage", "/mypage/edit"]) {
+    const matches = router.matchRoutes(path);
+    assert.ok(matches.some((match) => match.routeId === "/(authenticated)/_auth"));
+    assert.equal(matches.at(-1).pathname.replace(/\/$/, ""), path);
+    assert.ok(matches.every((match) => !match.pathname.includes("authenticated") && !match.pathname.includes("_auth")));
+  }
+});
+
+test("private cache cleanup removes member data while preserving public movie cache", () => {
+  queryClient.setQueryData(["member", 17, "me"], member);
+  queryClient.setQueryData(["favorites", 17, "list"], [{ movieId: 550 }]);
+  queryClient.setQueryData(["ratings", 17], [{ score: 4 }]);
+  queryClient.setQueryData(["movies", "detail", "550"], { id: 550 });
+  auth.clearPrivateQueries(queryClient);
+  assert.equal(queryClient.getQueryCache().getAll().length, 1);
+  assert.deepEqual(queryClient.getQueryData(["movies", "detail", "550"]), { id: 550 });
 });
 
 test("direct login route renders labeled empty inputs, masked password and disabled submit", async () => {
@@ -153,30 +190,30 @@ test("direct login route renders labeled empty inputs, masked password and disab
   assert.match(password, /type="password"/);
   assert.match(password, /value=""/);
   assert.match(html, /<button[^>]*type="submit"[^>]*disabled=""[^>]*>로그인<\/button>/);
-  assert.match(html, /실제 계정에 로그인하지 않습니다/);
+  assert.doesNotMatch(html, /미리보기|실제 계정에 로그인하지 않습니다/);
   assert.match(html, /href="\/signup"/);
 });
 
-test("direct profile route renders the example member and edit link without password data", async () => {
+test("server rendering shows profile loading without leaking a browser member session", async () => {
+  profileModule.useAuthStore.getState().setSession(token());
+  queryClient.setQueryData(memberQueries.me(17).queryKey, member);
+  queryClient.setQueryData(["favorites", 17, "list"], []);
   const html = await renderPath("/mypage");
   assert.match(html, /<h1[^>]*>내 정보<\/h1>/);
-  assert.match(html, /예시 회원 정보입니다/);
-  assert.match(html, /movie@example\.com/);
-  assert.match(html, /영화산책/);
+  assert.doesNotMatch(html, /예시 회원 정보입니다/);
+  assert.match(html, /내 정보를 불러오고 있어요/);
+  assert.doesNotMatch(html, /movie@example\.com|영화산책/);
   assert.match(html, /href="\/mypage\/edit"/);
   assert.doesNotMatch(html, /password|비밀번호|accessToken|refreshToken/i);
 });
 
-test("direct edit route initializes existing values, readonly email and disabled unchanged save", async () => {
+test("server rendering keeps the edit form hidden until the browser member query is ready", async () => {
+  profileModule.useAuthStore.getState().setSession(token());
+  queryClient.setQueryData(memberQueries.me(17).queryKey, member);
   const html = await renderPath("/mypage/edit");
   assert.match(html, /<h1[^>]*>내 정보 수정<\/h1>/);
-  const email = labeledInput(html, "이메일", "email");
-  const nickname = labeledInput(html, "닉네임", "nickname");
-  assert.match(email, /readOnly=""/);
-  assert.match(email, /value="movie@example\.com"/);
-  assert.match(nickname, /value="영화산책"/);
-  assert.match(html, /<button[^>]*type="submit"[^>]*disabled=""[^>]*>저장하기<\/button>/);
-  assert.match(html, /href="\/mypage"[^>]*>취소<\/a>/);
-  assert.match(html, /실제 계정에는 반영되지 않습니다/);
+  assert.match(html, /내 정보를 불러오고 있어요/);
+  assert.doesNotMatch(html, /name="email"|name="nickname"|movie@example\.com|영화산책/);
+  assert.doesNotMatch(html, /실제 계정에는 반영되지 않습니다/);
   assert.doesNotMatch(html, /type="password"|name="password"/);
 });

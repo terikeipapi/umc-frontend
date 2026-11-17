@@ -22,7 +22,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
             alt={`${movie.title} 포스터`}
           />
         </Link>
-        <BookmarkButton movieId={movie.id} movieTitle={movie.title} />
+        <BookmarkButton movieId={movie.id} movieTitle={movie.title} statusSource="list" />
       </div>
       <div className="mt-3">
         <h2 className="mb-1.5 overflow-hidden text-ellipsis whitespace-nowrap text-base leading-[1.4] font-semibold">

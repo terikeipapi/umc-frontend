@@ -1,10 +1,12 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import Header from "../components/layout/header";
 import Footer from "../components/layout/footer";
+import { SessionObserver } from "../components/auth/session-observer";
 
 export const Route = createRootRoute({
   component: () => (
     <>
+      <SessionObserver />
       <Header />
       <Outlet />
       <Footer />

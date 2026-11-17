@@ -5,6 +5,7 @@ import BookmarkButton from "../../components/movies/bookmark-button";
 import { getMovieErrorMessage } from "../../lib/movie-error";
 import { movieQueries } from "../../queries/movies";
 import { QueryActivity, RequestState } from "./request-state";
+import { RatingForm } from "../../components/movies/rating-form";
 
 export function MovieDetailPage() {
   const { movieId } = useParams({ from: "/movies/$movieId" });
@@ -61,6 +62,7 @@ export function MovieDetailPage() {
             </p>
             {movie.tagline && <h2 className="mb-3.5 text-2xl font-bold">{movie.tagline}</h2>}
             <p className="max-w-[680px] text-[17px] leading-[1.8] text-[#e2e2e2]">{movie.overview || "등록된 줄거리가 없어요."}</p>
+            <RatingForm key={movie.id} movieId={movie.id} />
           </div>
         </div>
       </section>

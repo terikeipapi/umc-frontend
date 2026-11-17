@@ -5,6 +5,7 @@ import { registerHooks } from "node:module";
 import { act, createElement } from "react";
 import { JSDOM } from "jsdom";
 import { createServer } from "vite";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const rootDirectory = fileURLToPath(new URL("../", import.meta.url));
 const originalFetch = globalThis.fetch;
@@ -15,6 +16,10 @@ let createRoot;
 let routing;
 let pages;
 let profileModule;
+let memberQueries;
+let queryClient;
+let observer;
+let authLayout;
 let clientResolver;
 let reactRoot;
 let requests = [];
@@ -25,7 +30,9 @@ function expose(name, value) {
   Object.defineProperty(globalThis, name, { value, configurable: true, writable: true });
 }
 
-const nextTurn = () => new Promise((resolve) => setImmediate(resolve));
+const nextTurn = () => new Promise((resolve) => setTimeout(resolve, 10));
+const token = (memberId = 17, expires = Math.floor(Date.now() / 1000) + 3600) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub: String(memberId), exp: expires })).toString("base64url")}.signature`;
+const member = { email: "movie@example.com", nickname: "영화산책", createdAt: "2026-11-17T00:00:00.000Z" };
 const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), {
   status,
   headers: { "content-type": "application/json" },
@@ -87,7 +94,10 @@ before(async () => {
     vite.ssrLoadModule("/src/pages/member/edit-profile-page.tsx"),
     vite.ssrLoadModule("/src/pages/auth/signup-page.tsx"),
   ]);
-  profileModule = await vite.ssrLoadModule("/src/store/profile-preview-store.ts");
+  profileModule = await vite.ssrLoadModule("/src/store/auth-store.ts");
+  ({ memberQueries } = await vite.ssrLoadModule("/src/queries/member.ts"));
+  ({ SessionObserver: observer } = await vite.ssrLoadModule("/src/components/auth/session-observer.tsx"));
+  authLayout = await vite.ssrLoadModule("/src/routes/(authenticated)/_auth.tsx");
   pages = [
     ["/login", login.LoginPage], ["/mypage", profile.ProfilePage],
     ["/mypage/edit", edit.EditProfilePage], ["/signup", signup.SignupPage],
@@ -96,14 +106,18 @@ before(async () => {
 
 beforeEach(() => {
   requests = [];
-  respond = () => { throw new Error("Unexpected network request in offline DOM test"); };
+  respond = (request) => new URL(request.url).pathname === "/members/me" && request.method === "GET"
+    ? apiSuccess(member) : new URL(request.url).pathname === "/favorites" ? apiSuccess([])
+      : (() => { throw new Error(`Unexpected ${request.method} ${request.url}`); })();
   document.body.innerHTML = '<div id="test-root"></div>';
-  profileModule.useProfilePreviewStore.setState({ profile: { ...profileModule.DEFAULT_PREVIEW_PROFILE } });
+  profileModule.useAuthStore.getState().clearSession();
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity }, mutations: { retry: false } } });
 });
 
 afterEach(async () => {
   if (reactRoot) await act(async () => { reactRoot.unmount(); });
   reactRoot = undefined;
+  queryClient.clear();
 });
 
 after(async () => {
@@ -119,10 +133,12 @@ after(async () => {
 
 async function mount(pathname) {
   const { createRootRoute, createRoute, createRouter, createMemoryHistory, Outlet, RouterProvider } = routing;
-  const rootRoute = createRootRoute({ component: Outlet });
+  const rootRoute = createRootRoute({ component: () => createElement("div", null, createElement(observer), createElement(Outlet)) });
   const router = createRouter({
     routeTree: rootRoute.addChildren(pages.map(([path, component]) => createRoute({
       getParentRoute: () => rootRoute, path, component,
+      validateSearch: (search) => search,
+      beforeLoad: path.startsWith("/mypage") ? authLayout.Route.options.beforeLoad : undefined,
     }))),
     history: createMemoryHistory({ initialEntries: [pathname] }),
     defaultPendingMs: 0,
@@ -130,7 +146,8 @@ async function mount(pathname) {
   });
   await router.load();
   reactRoot = createRoot(document.querySelector("#test-root"));
-  await act(async () => { reactRoot.render(createElement(RouterProvider, { router })); await nextTurn(); });
+  await act(async () => { reactRoot.render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router }))); await nextTurn(); });
+  await act(async () => { await nextTurn(); });
   return router;
 }
 
@@ -174,8 +191,8 @@ async function completeSignupForm() {
   await type("비밀번호 확인", "Movie!123");
 }
 
-test("login reacts to typing, toggles password visibility and submits preview feedback without requests", async () => {
-  await mount("/login");
+test("login validates input, toggles password visibility and sends one request while pending", async () => {
+  const router = await mount("/login?redirect=/mypage");
   assert.equal(button("로그인").disabled, true);
   await type("이메일", "not-an-email");
   await type("비밀번호", "old");
@@ -189,12 +206,62 @@ test("login reacts to typing, toggles password visibility and submits preview fe
   assert.equal(field("비밀번호").value, "old");
   await click(button("비밀번호 숨기기"));
   assert.equal(field("비밀번호").type, "password");
+  const pending = deferred();
+  respond = () => pending.promise;
+  const form = document.querySelector("form");
+  await act(async () => {
+    form.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    form.dispatchEvent(new dom.window.Event("submit", { bubbles: true, cancelable: true }));
+    await nextTurn();
+  });
+  assert.equal(requests.length, 1);
+  assert.equal(new URL(requests[0].url).pathname, "/auth/login");
+  assert.equal(requests[0].headers.has("authorization"), false);
+  assert.deepEqual(await requests[0].json(), { email: "movie@example.com", password: "old" });
+  assert.equal(button("로그인 중…").disabled, true);
+  respond = (request) => apiSuccess(new URL(request.url).pathname === "/favorites" ? [] : member);
+  await settlePending(pending, apiSuccess({ nickname: member.nickname, accessToken: token() }));
+  await act(async () => { await nextTurn(); });
+  assert.equal(profileModule.useAuthStore.getState().memberId, 17);
+  assert.equal(router.state.location.pathname, "/mypage");
+});
+
+test("failed login displays server feedback and allows retry without creating a session", async () => {
+  await mount("/login");
+  await type("이메일", "movie@example.com");
+  await type("비밀번호", "wrong");
+  respond = () => jsonResponse({ isSuccess: false, code: "AUTH401_1", message: "이메일 또는 비밀번호가 올바르지 않습니다.", result: null }, 401);
   await click(button("로그인"));
-  assert.match(document.querySelector('[role="status"]').textContent, /실제로 로그인되지 않아요/);
-  assert.equal(requests.length, 0);
+  assert.match(document.querySelector('[role="alert"]').textContent, /이메일 또는 비밀번호/);
+  assert.equal(profileModule.useAuthStore.getState().accessToken, null);
+  assert.equal(button("로그인").disabled, false);
+});
+
+test("a 401 while viewing a protected page clears the session and returns to login", async () => {
+  profileModule.useAuthStore.getState().setSession(token());
+  respond = () => jsonResponse({ isSuccess: false, code: "AUTH401", message: "다시 로그인해 주세요.", result: null }, 401);
+  const router = await mount("/mypage");
+  await act(async () => { await nextTurn(); });
+  assert.equal(profileModule.useAuthStore.getState().memberId, null);
+  assert.equal(router.state.location.pathname, "/login");
+  assert.equal(router.state.location.search.redirect, "/mypage");
+  assert.equal(document.querySelector("h1").textContent, "로그인");
+});
+
+test("token expiry redirects an open protected page and removes its private cache", async () => {
+  profileModule.useAuthStore.getState().setSession(token(17, (Date.now() + 180) / 1000));
+  const router = await mount("/mypage");
+  assert.equal(router.state.location.pathname, "/mypage");
+  await act(async () => { await new Promise((resolve) => setTimeout(resolve, 220)); });
+  await act(async () => { await nextTurn(); });
+  assert.equal(profileModule.useAuthStore.getState().memberId, null);
+  assert.equal(router.state.location.pathname, "/login");
+  assert.equal(queryClient.getQueryData(["member", 17, "me"]), undefined);
+  assert.equal(queryClient.getQueryData(["favorites", 17, "list"]), undefined);
 });
 
 test("profile edit rejects invalid or unchanged input and saves a changed nickname into the view route", async () => {
+  profileModule.useAuthStore.getState().setSession(token());
   const router = await mount("/mypage/edit");
   assert.equal(field("이메일").readOnly, true);
   assert.equal(button("저장하기").disabled, true);
@@ -205,16 +272,21 @@ test("profile edit rejects invalid or unchanged input and saves a changed nickna
   assert.equal(button("저장하기").disabled, true);
   await type("닉네임", "  새로운영화친구  ");
   assert.equal(button("저장하기").disabled, false);
+  respond = (request) => apiSuccess(new URL(request.url).pathname === "/favorites" ? [] : { ...member, nickname: "새로운영화친구" });
   await click(button("저장하기"));
   assert.equal(router.state.location.pathname, "/mypage");
   assert.equal(document.querySelector("h1").textContent, "내 정보");
   assert.match(document.querySelector("dl").textContent, /새로운영화친구/);
   assert.match(document.querySelector("dl").textContent, /movie@example.com/);
-  assert.equal(requests.length, 0);
+  const patches = requests.filter((request) => request.method === "PATCH");
+  assert.equal(patches.length, 1);
+  assert.deepEqual(await patches[0].json(), { nickname: "새로운영화친구" });
+  assert.match(patches[0].headers.get("authorization"), /^Bearer /);
 });
 
 test("cancel discards the edit draft and a later edit starts with the saved nickname", async () => {
-  profileModule.useProfilePreviewStore.getState().updateNickname("기존회원");
+  profileModule.useAuthStore.getState().setSession(token());
+  queryClient.setQueryData(memberQueries.me(17).queryKey, { ...member, nickname: "기존회원" });
   const router = await mount("/mypage/edit");
   assert.equal(field("닉네임").value, "기존회원");
   await type("닉네임", "취소할이름");
@@ -227,6 +299,7 @@ test("cancel discards the edit draft and a later edit starts with the saved nick
   await click(edit);
   assert.equal(router.state.location.pathname, "/mypage/edit");
   assert.equal(field("닉네임").value, "기존회원");
+  assert.equal(requests.filter((request) => request.method === "PATCH").length, 0);
 });
 
 test("signup duplicate checks lock their field, recover from failure and reset when the value changes", async () => {
