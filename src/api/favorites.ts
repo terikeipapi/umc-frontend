@@ -8,11 +8,13 @@ export async function getFavorites(signal?: AbortSignal) {
 }
 
 export async function getFavorite(movieId: number, signal?: AbortSignal) {
-  return (await readApiResponse<FavoriteStatus>(authenticatedApiClient.get(`favorites/${movieId}`, { signal }))).result;
+  const result = (await readApiResponse<{ isFavorite: boolean }>(authenticatedApiClient.get(`favorites/${movieId}`, { signal }))).result;
+  return { movieId, isFavorite: result.isFavorite };
 }
 
 export async function addFavorite(movieId: number) {
-  return (await readApiResponse<FavoriteStatus>(authenticatedApiClient.post("favorites", { json: { movieId } }))).result;
+  await readApiResponse<Favorite>(authenticatedApiClient.post("favorites", { json: { movieId } }));
+  return { movieId, isFavorite: true };
 }
 
 export async function deleteFavorite(movieId: number) {

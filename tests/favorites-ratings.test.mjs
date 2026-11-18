@@ -75,9 +75,9 @@ function assertRequest(index, path, method = "GET") {
 
 test("favorite list and movie status use authenticated member API, not TMDB", async () => {
   respond = (request) => json(request.url.endsWith("/550")
-    ? { movieId: 550, isFavorite: true }
-    : [{ movieId: 550 }]);
-  assert.deepEqual(await favorites.getFavorites(), [{ movieId: 550 }]);
+    ? { isFavorite: true }
+    : [{ favoriteId: 3, movieId: 550, createdAt: "2026-11-17T00:00:00.000Z" }]);
+  assert.deepEqual(await favorites.getFavorites(), [{ favoriteId: 3, movieId: 550, createdAt: "2026-11-17T00:00:00.000Z" }]);
   assert.deepEqual(await favorites.getFavorite(550), { movieId: 550, isFavorite: true });
   assertRequest(0, "favorites");
   assertRequest(1, "favorites/550");
@@ -85,8 +85,8 @@ test("favorite list and movie status use authenticated member API, not TMDB", as
 });
 
 test("favorite creation sends only movieId and removal targets that movieId", async () => {
-  respond = (request) => json(request.method === "DELETE" ? null : { movieId: 550, isFavorite: true });
-  await favorites.addFavorite(550);
+  respond = (request) => json(request.method === "DELETE" ? null : { favoriteId: 3, movieId: 550, createdAt: "2026-11-17T00:00:00.000Z" });
+  assert.deepEqual(await favorites.addFavorite(550), { movieId: 550, isFavorite: true });
   assert.deepEqual(await assertRequest(0, "favorites", "POST").json(), { movieId: 550 });
   await favorites.deleteFavorite(550);
   assertRequest(1, "favorites/550", "DELETE");
