@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 
-const root = fileURLToPath(new URL("../", import.meta.url));
 const originalFetch = globalThis.fetch;
 const apiBase = "https://members.example.test/api/";
 let server;
@@ -32,18 +30,11 @@ before(async () => {
     requests.push(request);
     return respond(request);
   };
-  server = await createServer({
-    root,
-    configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
-    define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify(`  ${apiBase}  `) },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom",
-    optimizeDeps: { noDiscovery: true, include: [] },
-    logLevel: "error",
+  server = await createSourceLoader({
+    define: { "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(`  ${apiBase}  `) },
   });
-  members = await server.ssrLoadModule("/src/api/members/check-duplicate.ts");
-  registration = await server.ssrLoadModule("/src/api/members/signup.ts");
+  members = await server.load("/src/api/members/check-duplicate.ts");
+  registration = await server.load("/src/api/members/signup.ts");
 });
 
 after(async () => {

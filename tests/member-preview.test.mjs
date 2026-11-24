@@ -1,20 +1,12 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
+import { readFileSync, existsSync } from "node:fs";
+import { createTestRouter, NextRouterProvider } from "./helpers/next-router.mjs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import {
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  Outlet,
-  RouterProvider,
-} from "@tanstack/react-router";
-import { createServer } from "vite";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const root = fileURLToPath(new URL("../", import.meta.url));
 let server;
 let form;
 let profileModule;
@@ -23,31 +15,21 @@ let auth;
 let authRoute;
 let memberQueries;
 let queryClient;
-let generatedTree;
 const token = (sub = "17", exp = Math.floor(Date.now() / 1000) + 3600) => `eyJhbGciOiJIUzI1NiJ9.${Buffer.from(JSON.stringify({ sub, exp })).toString("base64url")}.signature`;
 const member = { email: "movie@example.com", nickname: "영화산책", createdAt: "2026-11-17T00:00:00.000Z" };
 
 before(async () => {
-  server = await createServer({
-    root,
-    configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
-    esbuild: { jsx: "automatic" },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom",
-    optimizeDeps: { noDiscovery: true, include: [] },
-    logLevel: "error",
+  server = await createSourceLoader({
   });
-  form = await server.ssrLoadModule("/src/lib/member-form.ts");
-  profileModule = await server.ssrLoadModule("/src/store/auth-store.ts");
-  auth = await server.ssrLoadModule("/src/lib/auth.ts");
-  authRoute = await server.ssrLoadModule("/src/routes/(authenticated)/_auth.tsx");
-  ({ memberQueries } = await server.ssrLoadModule("/src/queries/member.ts"));
-  ({ routeTree: generatedTree } = await server.ssrLoadModule("/src/routeTree.gen.ts"));
+  form = await server.load("/src/lib/member-form.ts");
+  profileModule = await server.load("/src/store/auth-store.ts");
+  auth = await server.load("/src/lib/auth.ts");
+  authRoute = await server.load("/src/components/auth/auth-guard.tsx");
+  ({ memberQueries } = await server.load("/src/queries/member.ts"));
   const [login, profile, edit] = await Promise.all([
-    server.ssrLoadModule("/src/pages/auth/login-page.tsx"),
-    server.ssrLoadModule("/src/pages/member/profile-page.tsx"),
-    server.ssrLoadModule("/src/pages/member/edit-profile-page.tsx"),
+    server.load("/src/features/auth/login-page.tsx"),
+    server.load("/src/features/member/profile-page.tsx"),
+    server.load("/src/features/member/edit-profile-page.tsx"),
   ]);
   pages = [
     ["/login", login.LoginPage],
@@ -64,20 +46,11 @@ beforeEach(() => {
 });
 
 async function renderPath(pathname) {
-  const rootRoute = createRootRoute({ component: Outlet });
-  const routes = pages.map(([path, component]) => createRoute({
-    getParentRoute: () => rootRoute,
-    path,
-    component,
-  }));
-  const router = createRouter({
-    routeTree: rootRoute.addChildren(routes),
-    history: createMemoryHistory({ initialEntries: [pathname] }),
-  });
-  await router.load();
-  assert.equal(router.state.location.pathname, pathname);
-  assert.equal(router.state.matches.at(-1)?.status, "success");
-  return renderToStaticMarkup(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })));
+  const component = pages.find(([path]) => path === pathname)?.[1];
+  assert.ok(component, `Page ${pathname} exists`);
+  const router = createTestRouter(pathname);
+  return renderToStaticMarkup(createElement(QueryClientProvider, { client: queryClient },
+    createElement(NextRouterProvider, { router }, createElement(component))));
 }
 
 function labeledInput(html, label, name) {
@@ -143,6 +116,39 @@ test("session derives memberId from JWT and rejects malformed or expired tokens"
   assert.equal(store.getState().memberId, null);
 });
 
+test("importing the auth store on the server never reads browser storage", async () => {
+  const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
+  let reads = 0;
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    get() { reads += 1; throw new Error("Browser storage is unavailable on the server"); },
+  });
+  const isolated = await createSourceLoader();
+  try {
+    const store = (await isolated.load("/src/store/auth-store.ts")).useAuthStore;
+    assert.equal(reads, 0);
+    assert.equal(store.getInitialState().accessToken, null);
+    assert.equal(store.getInitialState().hydrated, false);
+  } finally {
+    await isolated.close();
+    if (original) Object.defineProperty(globalThis, "localStorage", original);
+    else delete globalThis.localStorage;
+  }
+});
+
+test("separate QueryClient instances never share member data across server requests", async () => {
+  const { createQueryClient } = await server.load("/src/lib/query-client.ts");
+  const first = createQueryClient();
+  const second = createQueryClient();
+  try {
+    first.setQueryData(["member", 17, "me"], member);
+    assert.equal(second.getQueryData(["member", 17, "me"]), undefined);
+  } finally {
+    first.clear();
+    second.clear();
+  }
+});
+
 test("login return URLs reject external destinations and login loops", () => {
   for (const invalid of ["https://evil.example", "//evil.example", "/\\evil.example", "/login", "/signup", "/\nevil.example"]) {
     assert.equal(auth.getSafeRedirect(invalid), "/mypage");
@@ -150,24 +156,22 @@ test("login return URLs reject external destinations and login loops", () => {
   assert.equal(auth.getSafeRedirect("/movies/550?tab=rating#mine"), "/movies/550?tab=rating#mine");
 });
 
-test("the shared layout guard redirects both protected page destinations before loading", () => {
-  for (const path of ["/mypage", "/mypage/edit"]) {
-    assert.throws(() => authRoute.Route.options.beforeLoad({ location: { href: path } }), (error) => {
-      assert.equal(error.options.to, "/login");
-      assert.equal(error.options.search.redirect, path);
-      return true;
-    });
-  }
+test("the shared guard hides protected children during server rendering", () => {
+  const router = createTestRouter("/mypage");
+  const html = renderToStaticMarkup(createElement(NextRouterProvider, { router },
+    createElement(authRoute.AuthGuard, null, createElement("p", null, "private member data"))));
+  assert.doesNotMatch(html, /private member data/);
+  assert.equal(router.location.pathname, "/mypage");
 });
 
-test("the generated tree places both member URLs under the shared pathless authenticated layout", () => {
-  const router = createRouter({ routeTree: generatedTree, history: createMemoryHistory({ initialEntries: ["/"] }) });
-  for (const path of ["/mypage", "/mypage/edit"]) {
-    const matches = router.matchRoutes(path);
-    assert.ok(matches.some((match) => match.routeId === "/(authenticated)/_auth"));
-    assert.equal(matches.at(-1).pathname.replace(/\/$/, ""), path);
-    assert.ok(matches.every((match) => !match.pathname.includes("authenticated") && !match.pathname.includes("_auth")));
+test("both member pages live under the shared Next route-group layout", () => {
+  for (const route of ["mypage/page.tsx", "mypage/edit/page.tsx"]) {
+    assert.ok(existsSync(new URL(`../src/app/(authenticated)/${route}`, import.meta.url)));
   }
+  const layout = readFileSync(new URL("../src/app/(authenticated)/layout.tsx", import.meta.url), "utf8");
+  assert.match(layout, /AuthGuard/);
+  assert.match(layout, /children/);
+  assert.ok(!existsSync(new URL("../src/pages", import.meta.url)), "Legacy pages folder must not register duplicate Next routes");
 });
 
 test("private cache cleanup removes member data while preserving public movie cache", () => {

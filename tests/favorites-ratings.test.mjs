@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { QueryObserver } from "@tanstack/react-query";
-import { createServer } from "vite";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 
 const originalFetch = globalThis.fetch;
 const apiBase = "https://members.example.test/api/";
@@ -31,20 +30,15 @@ before(async () => {
     requests.push(request.clone());
     return respond(request);
   };
-  server = await createServer({
-    root: fileURLToPath(new URL("../", import.meta.url)),
-    configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
-    define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify(apiBase) },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom", optimizeDeps: { noDiscovery: true, include: [] }, logLevel: "error",
+  server = await createSourceLoader({
+    define: { "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(apiBase) },
   });
-  favorites = await server.ssrLoadModule("/src/api/favorites.ts");
-  ratings = await server.ssrLoadModule("/src/api/ratings.ts");
-  ({ favoriteQueries } = await server.ssrLoadModule("/src/queries/favorites.ts"));
-  ({ ratingQueries } = await server.ssrLoadModule("/src/queries/ratings.ts"));
-  ({ useAuthStore: auth } = await server.ssrLoadModule("/src/store/auth-store.ts"));
-  ({ queryClient } = await server.ssrLoadModule("/src/lib/query-client.ts"));
+  favorites = await server.load("/src/api/favorites.ts");
+  ratings = await server.load("/src/api/ratings.ts");
+  ({ favoriteQueries } = await server.load("/src/queries/favorites.ts"));
+  ({ ratingQueries } = await server.load("/src/queries/ratings.ts"));
+  ({ useAuthStore: auth } = await server.load("/src/store/auth-store.ts"));
+  queryClient = (await server.load("/src/lib/query-client.ts")).createQueryClient();
 });
 
 beforeEach(() => {

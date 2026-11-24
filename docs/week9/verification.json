@@ -1,0 +1,81 @@
+{
+  "project": "UMCine",
+  "mission": "week9-nextjs-migration",
+  "verificationDate": "2026-11-24",
+  "timezone": "Asia/Seoul",
+  "framework": {
+    "name": "Next.js",
+    "version": "16.4.6",
+    "router": "App Router"
+  },
+  "commands": [
+    {
+      "command": "pnpm.cmd install --frozen-lockfile",
+      "status": "passed",
+      "notes": "esbuild builds allowed in pnpm-workspace.yaml"
+    },
+    {
+      "command": "pnpm.cmd type-check",
+      "status": "passed"
+    },
+    {
+      "command": "pnpm.cmd test",
+      "status": "passed",
+      "tests": {
+        "passed": 73,
+        "failed": 0,
+        "skipped": 0
+      },
+      "scope": "TypeScript modules, QueryClient, React DOM and Next routing contexts with mock HTTP responses"
+    },
+    {
+      "command": "pnpm.cmd build",
+      "status": "passed",
+      "routes": [
+        "/",
+        "/login",
+        "/movies/[movieId]",
+        "/mypage",
+        "/mypage/edit",
+        "/search",
+        "/signup",
+        "/_not-found"
+      ]
+    },
+    {
+      "command": "pnpm.cmd start",
+      "status": "started",
+      "port": 5173
+    }
+  ],
+  "httpVerification": {
+    "baseUrl": "http://localhost:5173",
+    "directLoad": {
+      "passed": 8,
+      "statusCode": 200
+    },
+    "unknownRoute": {
+      "statusCode": 404
+    },
+    "responseHeader": {
+      "X-Powered-By": "Next.js"
+    },
+    "scope": "Production document responses and route availability; separate from browser interactions and live API mutations"
+  },
+  "browserVerification": {
+    "status": "passed",
+    "executedAt": "2026-11-24T04:57:51.625Z",
+    "checks": {
+      "passed": 16,
+      "failed": 0
+    },
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "failedRequests": 0,
+    "screenshots": 8,
+    "scope": "Next.js production server with actual TMDB API and local NestJS/MySQL; no HTTP fixtures",
+    "report": "browser-verification.json",
+    "record": "SUBMISSION.md",
+    "temporaryMemberCleanup": 1
+  }
+}

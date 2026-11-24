@@ -26,10 +26,11 @@ export function decodeSession(accessToken: string): AuthSession | null {
 }
 
 function readStoredSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
   try {
-    const token = globalThis.localStorage?.getItem(AUTH_STORAGE_KEY);
+    const token = window.localStorage.getItem(AUTH_STORAGE_KEY);
     const session = token ? decodeSession(token) : null;
-    if (token && !session) globalThis.localStorage?.removeItem(AUTH_STORAGE_KEY);
+    if (token && !session) window.localStorage.removeItem(AUTH_STORAGE_KEY);
     return session;
   } catch {
     return null;
@@ -37,28 +38,35 @@ function readStoredSession(): AuthSession | null {
 }
 
 interface AuthState {
+  hydrated: boolean;
   accessToken: string | null;
   memberId: number | null;
   setSession: (accessToken: string) => void;
   clearSession: () => void;
 }
 
-const initialSession = readStoredSession();
-
 export const useAuthStore = create<AuthState>((set) => ({
-  accessToken: initialSession?.accessToken ?? null,
-  memberId: initialSession?.memberId ?? null,
+  hydrated: false,
+  accessToken: null,
+  memberId: null,
   setSession: (accessToken) => {
     const session = decodeSession(accessToken);
     if (!session) throw new Error("로그인 응답을 확인하지 못했어요. 다시 로그인해 주세요.");
-    try { globalThis.localStorage?.setItem(AUTH_STORAGE_KEY, accessToken); } catch { /* Memory session still works when storage is blocked. */ }
-    set({ accessToken, memberId: session.memberId });
+    try { if (typeof window !== "undefined") window.localStorage.setItem(AUTH_STORAGE_KEY, accessToken); } catch { /* Memory session still works when storage is blocked. */ }
+    set({ hydrated: true, accessToken, memberId: session.memberId });
   },
   clearSession: () => {
-    try { globalThis.localStorage?.removeItem(AUTH_STORAGE_KEY); } catch { /* Storage may be disabled. */ }
-    set({ accessToken: null, memberId: null });
+    try { if (typeof window !== "undefined") window.localStorage.removeItem(AUTH_STORAGE_KEY); } catch { /* Storage may be disabled. */ }
+    set({ hydrated: true, accessToken: null, memberId: null });
   },
 }));
+
+// Run from a client effect, after the server HTML has hydrated.
+export function hydrateSession(): void {
+  if (typeof window === "undefined") return;
+  const session = readStoredSession();
+  useAuthStore.setState({ hydrated: true, accessToken: session?.accessToken ?? null, memberId: session?.memberId ?? null });
+}
 
 export function getSession(): AuthSession | null {
   const { accessToken, clearSession } = useAuthStore.getState();

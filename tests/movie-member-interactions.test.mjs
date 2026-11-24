@@ -1,18 +1,15 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
-import { registerHooks } from "node:module";
 import { act, createElement } from "react";
 import { JSDOM } from "jsdom";
-import { createServer } from "vite";
+import { createTestRouter, TestRouteView } from "./helpers/next-router.mjs";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 
 const originalFetch = globalThis.fetch;
 const globals = new Map();
 let dom;
-let vite;
-let resolver;
+let source;
 let createRoot;
-let routing;
 let QueryClientProvider;
 let queryClient;
 let auth;
@@ -39,46 +36,35 @@ function expose(name, value) {
 }
 
 before(async () => {
-  dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost:5173/", pretendToBeVisual: true });
+  dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost:3001/", pretendToBeVisual: true });
   dom.window.scrollTo = () => {};
   for (const name of ["window", "self", "document", "navigator", "HTMLElement", "HTMLInputElement", "HTMLTextAreaElement", "Node"]) {
     expose(name, name === "window" ? dom.window : dom.window[name]);
   }
   expose("requestAnimationFrame", dom.window.requestAnimationFrame.bind(dom.window));
   expose("cancelAnimationFrame", dom.window.cancelAnimationFrame.bind(dom.window));
+  expose("localStorage", dom.window.localStorage);
   expose("scrollTo", () => {});
   expose("IS_REACT_ACT_ENVIRONMENT", true);
-  resolver = registerHooks({
-    resolve(specifier, context, nextResolve) {
-      return nextResolve(specifier, specifier === "@tanstack/router-core/isServer"
-        ? { ...context, conditions: ["browser", ...context.conditions] } : context);
-    },
-  });
   ({ createRoot } = await import("react-dom/client"));
   ({ QueryClientProvider } = await import("@tanstack/react-query"));
-  routing = await import("@tanstack/react-router");
   globalThis.fetch = async (input, init) => {
     const request = new Request(input, init);
     requests.push(request.clone());
     return respond(request);
   };
-  vite = await createServer({
-    root: fileURLToPath(new URL("../", import.meta.url)), configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
-    define: { "import.meta.env.VITE_API_BASE_URL": JSON.stringify("http://localhost:3000") },
-    esbuild: { jsx: "automatic" },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom", optimizeDeps: { noDiscovery: true, include: [] }, logLevel: "error",
+  source = await createSourceLoader({
+    define: { "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify("http://localhost:3000") },
   });
-  ({ default: BookmarkButton } = await vite.ssrLoadModule("/src/components/movies/bookmark-button.tsx"));
-  ({ RatingForm } = await vite.ssrLoadModule("/src/components/movies/rating-form.tsx"));
-  ({ useAuthStore: auth } = await vite.ssrLoadModule("/src/store/auth-store.ts"));
-  ({ queryClient } = await vite.ssrLoadModule("/src/lib/query-client.ts"));
+  ({ default: BookmarkButton } = await source.load("/src/components/movies/bookmark-button.tsx"));
+  ({ RatingForm } = await source.load("/src/components/movies/rating-form.tsx"));
+  ({ useAuthStore: auth } = await source.load("/src/store/auth-store.ts"));
+  queryClient = (await source.load("/src/lib/query-client.ts")).createQueryClient();
   // Mutation observers schedule collection after unmount; collect immediately in
   // this isolated test process instead of leaving browser-length timers alive.
   queryClient.setDefaultOptions({ ...queryClient.getDefaultOptions(), mutations: { gcTime: 0 } });
-  ({ favoriteQueries } = await vite.ssrLoadModule("/src/queries/favorites.ts"));
-  ({ ratingQueries } = await vite.ssrLoadModule("/src/queries/ratings.ts"));
+  ({ favoriteQueries } = await source.load("/src/queries/favorites.ts"));
+  ({ ratingQueries } = await source.load("/src/queries/ratings.ts"));
 });
 
 beforeEach(() => {
@@ -96,8 +82,7 @@ afterEach(async () => {
 });
 
 after(async () => {
-  await vite?.close();
-  resolver?.deregister();
+  await source?.close();
   dom?.window.close();
   globalThis.fetch = originalFetch;
   for (const [name, descriptor] of globals) {
@@ -107,19 +92,12 @@ after(async () => {
 });
 
 async function mount(component) {
-  const { createRootRoute, createRoute, createRouter, createMemoryHistory, Outlet, RouterProvider } = routing;
-  const root = createRootRoute({ component: Outlet });
-  const router = createRouter({
-    routeTree: root.addChildren([
-      createRoute({ getParentRoute: () => root, path: "/movies/550", component }),
-      createRoute({ getParentRoute: () => root, path: "/login", component: () => createElement("h1", null, "로그인") }),
-    ]),
-    history: createMemoryHistory({ initialEntries: ["/movies/550"] }), defaultPendingMs: 0, defaultPendingMinMs: 0,
-  });
-  await router.load();
+  const router = createTestRouter("/movies/550");
+  const routes = [["/movies/550", component], ["/login", () => createElement("h1", null, "???")]];
   reactRoot = createRoot(document.getElementById("test-root"));
   await act(async () => {
-    reactRoot.render(createElement(QueryClientProvider, { client: queryClient }, createElement(RouterProvider, { router })));
+    reactRoot.render(createElement(QueryClientProvider, { client: queryClient },
+      createElement(TestRouteView, { router, routes })));
     await nextTurn();
   });
   return router;
@@ -157,8 +135,8 @@ test("anonymous movie controls avoid member requests and return through login", 
     createElement(RatingForm, { movieId: 550 })));
   assert.equal(requests.length, 0);
   await click(bookmark());
-  assert.equal(router.state.location.pathname, "/login");
-  assert.equal(router.state.location.search.redirect, "/movies/550");
+  assert.equal(router.location.pathname, "/login");
+  assert.equal(router.location.searchParams.get("redirect"), "/movies/550");
   assert.equal(requests.length, 0);
 });
 

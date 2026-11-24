@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
 import { QueryObserver } from "@tanstack/react-query";
-import { createServer } from "vite";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 
-const root = fileURLToPath(new URL("../", import.meta.url));
 const originalFetch = globalThis.fetch;
 let server;
 let queryClient;
@@ -36,21 +34,14 @@ before(async () => {
     requests.push(request);
     return respond(request);
   };
-  server = await createServer({
-    root,
-    configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
+  server = await createSourceLoader({
     define: {
-      "import.meta.env.VITE_TMDB_ACCESS_TOKEN": JSON.stringify("offline-query-test-token"),
-      "import.meta.env.VITE_TMDB_API_KEY": JSON.stringify(""),
+      "process.env.NEXT_PUBLIC_TMDB_ACCESS_TOKEN": JSON.stringify("offline-query-test-token"),
+      "process.env.NEXT_PUBLIC_TMDB_API_KEY": JSON.stringify(""),
     },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom",
-    optimizeDeps: { noDiscovery: true, include: [] },
-    logLevel: "error",
   });
-  ({ queryClient } = await server.ssrLoadModule("/src/lib/query-client.ts"));
-  ({ movieQueries } = await server.ssrLoadModule("/src/queries/movies.ts"));
+  queryClient = (await server.load("/src/lib/query-client.ts")).createQueryClient();
+  ({ movieQueries } = await server.load("/src/queries/movies.ts"));
 });
 
 after(async () => {

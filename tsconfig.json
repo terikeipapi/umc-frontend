@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
 
-    "allowJs": false,
+    "allowJs": true,
     "skipLibCheck": true,
 
     "esModuleInterop": true,
@@ -22,8 +22,11 @@
 
     "jsx": "react-jsx",
 
-    "types": ["vite/client"]
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "types": ["node"]
   },
 
-  "include": ["src"]
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts", ".next/dev/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

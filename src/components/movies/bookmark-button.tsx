@@ -1,6 +1,8 @@
+"use client";
+
 import { cn } from "../../lib/cn";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "../../store/auth-store";
 import { favoriteKeys, favoriteQueries, useToggleFavorite } from "../../queries/favorites";
 import { getMemberErrorMessage } from "../../lib/member-session";
@@ -13,7 +15,7 @@ interface BookmarkButtonProps {
 
 export default function BookmarkButton({ movieId, movieTitle, statusSource = "detail" }: BookmarkButtonProps) {
   const memberId = useAuthStore((state) => state.memberId);
-  const navigate = useNavigate();
+  const router = useRouter();
   const detail = useQuery({ ...favoriteQueries.detail(memberId, movieId), enabled: memberId !== null && statusSource === "detail" });
   const list = useQuery({ ...favoriteQueries.list(memberId), staleTime: 10_000, enabled: memberId !== null && statusSource === "list" });
   const mutation = useToggleFavorite(movieId);
@@ -24,7 +26,7 @@ export default function BookmarkButton({ movieId, movieTitle, statusSource = "de
 
   function toggle() {
     if (memberId === null) {
-      void navigate({ to: "/login", search: { redirect: `/movies/${movieId}` } });
+      router.push(`/login?${new URLSearchParams({ redirect: `/movies/${movieId}` })}`);
       return;
     }
     if (busy || request.isError) return;

@@ -1,5 +1,5 @@
 import MoviePoster from "./movie-poster";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import type { Movie } from "../../types/movie";
 import BookmarkButton from "./bookmark-button";
 
@@ -12,8 +12,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
     <article className="min-w-0 [-webkit-tap-highlight-color:transparent]">
       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[10px] bg-[#eee]">
         <Link
-          to="/movies/$movieId"
-          params={{ movieId: String(movie.id) }}
+          href={`/movies/${movie.id}`}
           aria-label={`${movie.title} 상세 보기`}
         >
           <MoviePoster
@@ -26,7 +25,7 @@ export default function MovieCard({ movie }: MovieCardProps) {
       </div>
       <div className="mt-3">
         <h2 className="mb-1.5 overflow-hidden text-ellipsis whitespace-nowrap text-base leading-[1.4] font-semibold">
-          <Link to="/movies/$movieId" params={{ movieId: String(movie.id) }}>
+          <Link href={`/movies/${movie.id}`}>
             {movie.title}
           </Link>
         </h2>

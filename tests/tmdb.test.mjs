@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
-import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createSourceLoader } from "./helpers/source-loader.mjs";
 
-const root = fileURLToPath(new URL("../", import.meta.url));
 const originalFetch = globalThis.fetch;
 const fakeToken = "offline-test-token";
 let server;
@@ -34,18 +32,11 @@ const jsonResponse = (body, status = 200) => new Response(JSON.stringify(body), 
 const signal = () => new AbortController().signal;
 
 async function createTestServer(token = fakeToken, apiKey = "") {
-  return createServer({
-    root,
-    configFile: false,
-    envDir: fileURLToPath(new URL("./fixtures/no-env/", import.meta.url)),
+  return createSourceLoader({
     define: {
-      "import.meta.env.VITE_TMDB_ACCESS_TOKEN": JSON.stringify(token),
-      "import.meta.env.VITE_TMDB_API_KEY": JSON.stringify(apiKey),
+      "process.env.NEXT_PUBLIC_TMDB_ACCESS_TOKEN": JSON.stringify(token),
+      "process.env.NEXT_PUBLIC_TMDB_API_KEY": JSON.stringify(apiKey),
     },
-    server: { middlewareMode: true, hmr: false, ws: false, watch: null },
-    appType: "custom",
-    optimizeDeps: { noDiscovery: true, include: [] },
-    logLevel: "error",
   });
 }
 
@@ -57,8 +48,8 @@ before(async () => {
     return respond(request);
   };
   server = await createTestServer();
-  movies = await server.ssrLoadModule("/src/api/movies.ts");
-  nativeFetch = await server.ssrLoadModule("/src/api/popular-fetch.ts");
+  movies = await server.load("/src/api/movies.ts");
+  nativeFetch = await server.load("/src/api/popular-fetch.ts");
 });
 
 after(async () => {
@@ -188,7 +179,7 @@ test("an in-flight request is cancellable when the page or search changes", asyn
 test("API key authentication also preserves request-specific search parameters", async () => {
   const keyServer = await createTestServer("", "offline-api-key");
   try {
-    const keyMovies = await keyServer.ssrLoadModule("/src/api/movies.ts");
+    const keyMovies = await keyServer.load("/src/api/movies.ts");
     await keyMovies.searchMovies("Dune", 2, signal());
     assert.equal(requests.length, 1);
     const request = requests[0];
@@ -207,10 +198,10 @@ test("API key authentication also preserves request-specific search parameters",
 test("missing credentials show a configuration error without sending an unauthenticated request", async () => {
   const unconfiguredServer = await createTestServer("", "");
   try {
-    const unconfiguredMovies = await unconfiguredServer.ssrLoadModule("/src/api/movies.ts");
+    const unconfiguredMovies = await unconfiguredServer.load("/src/api/movies.ts");
     await assert.rejects(unconfiguredMovies.getPopularMovies(1, signal()), (error) => {
       assert.equal(error.name, "TmdbConfigurationError");
-      assert.match(error.message, /VITE_TMDB_ACCESS_TOKEN/);
+      assert.match(error.message, /NEXT_PUBLIC_TMDB_ACCESS_TOKEN/);
       return true;
     });
     assert.equal(requests.length, 0);

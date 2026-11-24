@@ -1,5 +1,7 @@
+"use client";
+
 import { useState, type FormEvent } from "react";
-import { Link } from "@tanstack/react-router";
+import Link from "next/link";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import type { Rating, RatingInput } from "../../api/ratings";
 import { useAuthStore } from "../../store/auth-store";
@@ -24,7 +26,7 @@ function MemberRatingForm({ movieId, memberId }: { movieId: number; memberId: nu
     <section className="mt-10 max-w-[680px] rounded-xl border border-white/20 bg-black/35 p-6" aria-labelledby="rating-heading">
       <h2 id="rating-heading" className="text-xl font-bold">나의 평점</h2>
       {memberId === null ? (
-        <p className="mt-4 text-sm text-neutral-200"><Link className="underline" to="/login" search={{ redirect: `/movies/${movieId}` }}>로그인</Link>하고 평점과 후기를 남겨 보세요.</p>
+        <p className="mt-4 text-sm text-neutral-200"><Link className="underline" href={`/login?${new URLSearchParams({ redirect: `/movies/${movieId}` })}`}>로그인</Link>하고 평점과 후기를 남겨 보세요.</p>
       ) : request.isPending ? (
         <p className="mt-4 text-sm" role="status">내 평점을 불러오고 있어요.</p>
       ) : (

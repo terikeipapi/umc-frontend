@@ -1,11 +1,11 @@
+"use client";
+
 import { useEffect } from "react";
-import { useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { clearPrivateQueries } from "../../lib/auth";
-import { getSession, useAuthStore } from "../../store/auth-store";
+import { AUTH_STORAGE_KEY, getSession, hydrateSession, useAuthStore } from "../../store/auth-store";
 
 export function SessionObserver() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -23,11 +23,22 @@ export function SessionObserver() {
       if (state.accessToken === previous.accessToken) return;
       clearPrivateQueries(queryClient);
       scheduleExpiration();
-      void router.invalidate();
     });
+    hydrateSession();
     scheduleExpiration();
-    return () => { unsubscribe(); clearTimeout(timer); };
-  }, [router, queryClient]);
+    function syncSession(event: StorageEvent) {
+      if (event.key === AUTH_STORAGE_KEY || event.key === null) hydrateSession();
+    }
+    window.addEventListener("storage", syncSession);
+    if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("tmdb-fetch") === "1") {
+      void import("../../dev/tmdb-fetch-probe");
+    }
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+      window.removeEventListener("storage", syncSession);
+    };
+  }, [queryClient]);
 
   return null;
 }

@@ -1,0 +1,1318 @@
+{
+  "executedAt": "2026-11-24T04:57:51.625Z",
+  "timezone": "Asia/Seoul",
+  "mode": "Next.js production server; actual TMDB API and local NestJS/MySQL; no HTTP fixtures",
+  "baseURL": "http://localhost:5173",
+  "success": true,
+  "checks": [
+    {
+      "name": "실제 TMDB 인기 영화 렌더링",
+      "passed": true
+    },
+    {
+      "name": "URL 페이지 이동 및 1페이지 TanStack Query 캐시 재사용",
+      "passed": true
+    },
+    {
+      "name": "숫자 제목 1917 검색 및 URL 검색어 보존",
+      "passed": true
+    },
+    {
+      "name": "영화 상세 직접 데이터 조회 및 비로그인 평점 안내",
+      "passed": true
+    },
+    {
+      "name": "영화 상세에서 목록 복귀 시 캐시 유지",
+      "passed": true
+    },
+    {
+      "name": "비로그인 보호 경로 차단 및 복귀 URL 보존",
+      "passed": true
+    },
+    {
+      "name": "실제 회원가입 및 이메일·닉네임 중복 확인",
+      "passed": true
+    },
+    {
+      "name": "실제 로그인 성공 후 원래 보호 경로 복귀",
+      "passed": true
+    },
+    {
+      "name": "회원정보 수정 취소 후 재진입 시 서버 저장값 복원",
+      "passed": true
+    },
+    {
+      "name": "회원정보 수정 및 보호 페이지 새로고침 후 세션·수정값 유지",
+      "passed": true
+    },
+    {
+      "name": "찜 생성 및 평점·후기 등록/수정 실제 API 연동",
+      "passed": true
+    },
+    {
+      "name": "마이페이지에 서버 찜 목록 렌더링",
+      "passed": true
+    },
+    {
+      "name": "평점 삭제 및 찜 해제 실제 API 연동",
+      "passed": true
+    },
+    {
+      "name": "로그아웃 후 토큰 제거 및 보호 경로 재차단",
+      "passed": true
+    },
+    {
+      "name": "잘못된 영화 ID 오류 화면",
+      "passed": true
+    },
+    {
+      "name": "브라우저 hydration/runtime/console 오류 및 실패 요청 0건",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    "01-popular-movies.png",
+    "02-search-1917.png",
+    "03-movie-detail.png",
+    "04-protected-route-login.png",
+    "05-profile-edit.png",
+    "06-favorite-rating.png",
+    "07-profile-favorites.png",
+    "08-invalid-movie.png"
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": [],
+  "network": [
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/movie/popular",
+      "page": "1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1726",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1368337",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1263337",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1300968",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1726",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1368337",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1263337",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1300968",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1400837",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/969681",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1423191",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1058424",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1616687",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1507696",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1551025",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1244523",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1813355",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1003596",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1599184",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1562642",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1741617",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/656908",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1294189",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/movie/popular",
+      "page": "2",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1381071",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1422041",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1228834",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1567605",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1514026",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1595124",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1185344",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1288445",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/509467",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1283515",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1568060",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/755898",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/101299",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1596275",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/687163",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/1492566",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/27",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/search/movie",
+      "page": "1",
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/547729",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/266532",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/movie/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/email/next-mission-28427ddc43%40example.com",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/nickname/%EB%84%A5%EC%8A%A4%ED%8A%B828427",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "host": "localhost:3000",
+      "path": "/members",
+      "page": null,
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "host": "localhost:3000",
+      "path": "/auth/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/me",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "PATCH",
+      "host": "localhost:3000",
+      "path": "/members/me",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/me",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/movie/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "host": "localhost:3000",
+      "path": "/ratings",
+      "page": null,
+      "status": 201
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "PATCH",
+      "host": "localhost:3000",
+      "path": "/ratings/24",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/me",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage/edit",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "api.themoviedb.org",
+      "path": "/3/movie/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "host": "localhost:3000",
+      "path": "/ratings/24",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/members/32/ratings",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "DELETE",
+      "host": "localhost:3000",
+      "path": "/favorites/530915",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:3000",
+      "path": "/favorites",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/mypage",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/movies/abc",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/login",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/signup",
+      "page": null,
+      "status": 200
+    },
+    {
+      "method": "GET",
+      "host": "localhost:5173",
+      "path": "/search",
+      "page": null,
+      "status": 200
+    }
+  ],
+  "cleanup": {
+    "members": 1,
+    "favorites": 0,
+    "ratings": 0
+  }
+}

@@ -1,6 +1,4 @@
-import { redirect } from "@tanstack/react-router";
 import type { QueryClient } from "@tanstack/react-query";
-import { getSession } from "../store/auth-store";
 
 export function getSafeRedirect(value: unknown, fallback = "/mypage"): string {
   if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || /[\\\s\u0000-\u001f]/.test(value)) return fallback;
@@ -13,10 +11,8 @@ export function getSafeRedirect(value: unknown, fallback = "/mypage"): string {
   }
 }
 
-export function requireAuth(location: { href: string }) {
-  const session = getSession();
-  if (!session) throw redirect({ to: "/login", search: { redirect: getSafeRedirect(location.href) } });
-  return session;
+export function getLoginHref(redirect: string): string {
+  return `/login?${new URLSearchParams({ redirect: getSafeRedirect(redirect) })}`;
 }
 
 export function clearPrivateQueries(client: QueryClient): void {

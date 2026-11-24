@@ -1,3 +1,5 @@
+"use client";
+
 import type { ImgHTMLAttributes } from "react";
 
 const posterPlaceholder = "/images/poster-placeholder.svg";
